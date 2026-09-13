@@ -49,7 +49,7 @@ async def setup_totp(
     totp = pyotp.TOTP(secret)
     provisioning_uri = totp.provisioning_uri(
         name=user.email,
-        issuer_name="eMenu",
+        issuer_name="EMENU NP",
     )
 
     import qrcode
