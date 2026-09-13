@@ -6,6 +6,8 @@ from sqlmodel import SQLModel
 from app.config import settings
 
 DATABASE_URL = settings.DATABASE_URL
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is not set")
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
@@ -13,9 +15,6 @@ engine = create_async_engine(
     DATABASE_URL,
     echo=False,
     future=True,
-    pool_size=20,
-    max_overflow=20,
-    pool_recycle=3600,
 )
 
 async_session = async_sessionmaker(
