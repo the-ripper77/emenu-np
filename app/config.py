@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
-    DATABASE_URL: str = "postgresql+asyncpg://emenu_user:emenu_pass@localhost:5432/emenu"
+    DATABASE_URL: str = ""
+    POSTGRES_PRISMA_URL: str = ""
 
     JWT_SECRET: str = "change-me"
     JWT_ALGORITHM: str = "HS256"
@@ -44,3 +45,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if not settings.DATABASE_URL and settings.POSTGRES_PRISMA_URL:
+    settings.DATABASE_URL = settings.POSTGRES_PRISMA_URL
