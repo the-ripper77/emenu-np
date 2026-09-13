@@ -26,9 +26,14 @@ try:
     engine = create_async_engine(_url, echo=False, future=True)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 except Exception as e:
-    print(f"[DB INIT ERROR] {e}")
+    import sys
+    print(f"[DB INIT ERROR] {e}", file=sys.stderr)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    if async_session is None:
+        raise RuntimeError(
+            "Database is not configured. Set DATABASE_URL environment variable."
+        )
     async with async_session() as session:
         yield session

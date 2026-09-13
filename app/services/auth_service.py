@@ -3,17 +3,16 @@ import hashlib
 import secrets
 from typing import Optional
 
-import bcrypt
-from jose import JWTError, jwt
-
 from app.config import settings
 
 
 def hash_password(password: str) -> str:
+    import bcrypt
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
+    import bcrypt
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
@@ -32,6 +31,7 @@ def create_access_token(
     expires_delta: Optional[datetime.timedelta] = None,
     expires_minutes: Optional[int] = None,
 ) -> str:
+    from jose import jwt
     if expires_minutes is not None:
         expire = datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=expires_minutes)
     else:
@@ -48,6 +48,7 @@ def create_access_token(
 
 
 def decode_token(token: str) -> Optional[dict]:
+    from jose import JWTError, jwt
     try:
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
     except JWTError:

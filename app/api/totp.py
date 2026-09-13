@@ -3,7 +3,6 @@ import hashlib
 import secrets
 
 import pyotp
-import qrcode
 import io
 import base64
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -53,6 +52,7 @@ async def setup_totp(
         issuer_name="eMenu",
     )
 
+    import qrcode
     qr = qrcode.make(provisioning_uri)
     buf = io.BytesIO()
     qr.save(buf, format="PNG")

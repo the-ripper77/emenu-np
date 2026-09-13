@@ -3,7 +3,6 @@ import datetime
 import hashlib
 import json
 
-import webauthn
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,6 +56,7 @@ async def register_begin(
     )
     existing_credentials = result.scalars().all()
 
+    import webauthn
     options = webauthn.generate_registration_options(
         rp_id=settings.WEBAUTHN_RP_ID,
         rp_name=settings.WEBAUTHN_RP_NAME,
@@ -122,6 +122,7 @@ async def register_finish(
 
     expected_challenge = base64.urlsafe_b64decode(challenge_record.challenge)
 
+    import webauthn
     try:
         verification = webauthn.verify_registration_response(
             credential=body.credential,
@@ -155,6 +156,7 @@ async def auth_begin(
     body: WebAuthnAuthBeginRequest,
     session: AsyncSession = Depends(get_session),
 ):
+    import webauthn
     allow_credentials = []
     if body.email:
         if body.user_type == "staff":
@@ -231,6 +233,7 @@ async def auth_finish(
     if not stored_cred:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown credential")
 
+    import webauthn
     try:
         verification = webauthn.verify_authentication_response(
             credential=body.credential,
