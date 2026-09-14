@@ -73,3 +73,32 @@ async def debug_db():
             return {"status": "ok", "result": result.scalar()}
     except Exception as e:
         return {"status": "error", "type": type(e).__name__, "message": str(e), "trace": traceback.format_exc()}
+
+
+@app.get("/api/_debug/table")
+async def debug_table():
+    import traceback
+    from app import database
+    try:
+        async with database.async_session() as session:
+            from sqlalchemy import text
+            result = await session.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"))
+            tables = [row[0] for row in result.fetchall()]
+            return {"tables": tables}
+    except Exception as e:
+        return {"status": "error", "type": type(e).__name__, "message": str(e), "trace": traceback.format_exc()}
+
+
+@app.get("/api/_debug/profile")
+async def debug_profile():
+    import traceback
+    from app import database
+    try:
+        async with database.async_session() as session:
+            from sqlmodel import select
+            from app.models.restaurant_profile import RestaurantProfile
+            result = await session.execute(select(RestaurantProfile).limit(1))
+            profile = result.scalar_one_or_none()
+            return {"profile": profile, "found": profile is not None}
+    except Exception as e:
+        return {"status": "error", "type": type(e).__name__, "message": str(e), "trace": traceback.format_exc()}
