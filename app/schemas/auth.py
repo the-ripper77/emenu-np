@@ -54,5 +54,10 @@ class VerifyTOTPRequest(BaseModel):
     remember_device: bool = False
 
 
+class UnifiedLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
 class DisableTOTPRequest(BaseModel):
     code: str

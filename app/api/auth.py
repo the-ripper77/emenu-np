@@ -22,6 +22,7 @@ from app.schemas.auth import (
     ResetPasswordRequest,
     StaffLoginRequest,
     TokenResponse,
+    UnifiedLoginRequest,
 )
 from app.services.auth_service import (
     create_access_token,
@@ -108,6 +109,35 @@ async def customer_login(body: CustomerLoginRequest, request: Request, session: 
 
     token = create_access_token(subject=str(customer.id), role="customer", user_type="customer")
     return TokenResponse(access_token=token, user_type="customer")
+
+
+@router.post("/login-all", response_model=TokenResponse)
+async def unified_login(body: UnifiedLoginRequest, request: Request, session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(Customer).where(Customer.email == body.email))
+    customer = result.scalar_one_or_none()
+    if customer is not None and customer.password_hash is not None and verify_password(body.password, customer.password_hash):
+        if customer.totp_enabled:
+            is_trusted = await _is_trusted_device(session, "customer", customer.id, request)
+            if not is_trusted:
+                temp_token = create_access_token(subject=str(customer.id), role="customer", user_type="customer", expires_minutes=5)
+                return TokenResponse(access_token="", user_type="customer", requires_totp=True, temp_token=temp_token)
+        token = create_access_token(subject=str(customer.id), role="customer", user_type="customer")
+        return TokenResponse(access_token=token, user_type="customer")
+
+    result = await session.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+    if user is not None and verify_password(body.password, user.password_hash):
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account disabled")
+        if user.totp_enabled:
+            is_trusted = await _is_trusted_device(session, "staff", user.id, request)
+            if not is_trusted:
+                temp_token = create_access_token(subject=str(user.id), role=user.role, user_type="staff", expires_minutes=5)
+                return TokenResponse(access_token="", role=user.role, user_type="staff", requires_totp=True, temp_token=temp_token)
+        token = create_access_token(subject=str(user.id), role=user.role, user_type="staff")
+        return TokenResponse(access_token=token, role=user.role, user_type="staff")
+
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
 
 @router.post("/refresh", response_model=TokenResponse)
