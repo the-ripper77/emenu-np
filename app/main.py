@@ -6,39 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from app.config import settings
-    from app.database import engine, async_session
-
-    if engine is not None:
-        from sqlmodel import SQLModel, select
-        from app.models import (
-            Campaign, Category, Customer, EmailVerification, MenuItem,
-            Order, OrderItem, OrderStatusHistory, Permission, PromoBanner,
-            RestaurantProfile, RolePermission, User, WebAuthnCredential,
-            WebAuthnChallenge, TrustedDevice,
-        )
-
-        async with engine.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
-
-        SEED_PERMISSIONS = [
-            ("view_payment_status", "View payment status on orders"),
-            ("verify_payment", "Confirm cash/QR payments as received"),
-            ("complete_cash_order", "Mark cash orders as completed"),
-            ("update_fulfillment_status", "Update order fulfillment status (preparing, ready, etc.)"),
-            ("override_gateway_payment", "Override gateway payment status manually"),
-            ("edit_menu", "Create, edit, and delete menu categories and items"),
-            ("manage_promos", "Create, edit, and delete promo banners and campaigns"),
-            ("manage_staff", "Create, edit, and deactivate staff accounts and permissions"),
-        ]
-
-        async with async_session() as session:
-            for key, description in SEED_PERMISSIONS:
-                result = await session.execute(select(Permission).where(Permission.key == key))
-                if result.scalar_one_or_none() is None:
-                    session.add(Permission(key=key, description=description))
-            await session.commit()
-
     from app.api.admin import router as admin_router
     from app.api.auth import router as auth_router
     from app.api.campaigns import router as campaigns_router
@@ -67,6 +34,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    from app.database import engine
     if engine is not None:
         await engine.dispose()
 
