@@ -38,7 +38,7 @@ async_session = None
 
 try:
     _url = _get_database_url()
-    engine = create_async_engine(_url, echo=False, future=True)
+    engine = create_async_engine(_url, echo=False, future=True, connect_args={"ssl": "require"})
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 except Exception as e:
     import sys
