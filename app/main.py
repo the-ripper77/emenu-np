@@ -58,3 +58,18 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/api/_debug/db")
+async def debug_db():
+    import traceback
+    from app import database
+    try:
+        if database.async_session is None:
+            return {"status": "no_session", "engine": database.engine is not None}
+        async with database.async_session() as session:
+            from sqlalchemy import text
+            result = await session.execute(text("SELECT 1"))
+            return {"status": "ok", "result": result.scalar()}
+    except Exception as e:
+        return {"status": "error", "type": type(e).__name__, "message": str(e), "trace": traceback.format_exc()}
