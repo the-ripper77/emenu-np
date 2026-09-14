@@ -32,3 +32,5 @@ docker-compose.override.yml
 
 # Alembic
 alembic/versions/*.pyc
+emenu-frontend
+seed_admin.py
